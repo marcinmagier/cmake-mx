@@ -301,3 +301,19 @@ function(GET_CFLAGS result)
     set(${result} ${cfglist} PARENT_SCOPE)
 endfunction()
 
+
+
+
+########################################################################
+# other functions
+########################################################################
+
+# Add preprocessor define __FILENAME__ with relative source path
+# for each source file depended on given target
+function(define_filename_for_sources target)
+    get_target_property(sources "${target}" SOURCES)
+    foreach(src ${sources})
+        set_property(SOURCE "${src}" APPEND PROPERTY COMPILE_DEFINITIONS "__FILENAME__=\"${src}\"")
+    endforeach()
+endfunction()
+
