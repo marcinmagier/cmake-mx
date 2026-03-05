@@ -25,9 +25,12 @@ find_program(OPENOCD    openocd)
 # helper functions to show output size
 ########################################################################
 
-macro(GEN_OUT_SIZE target)
+macro(SHOW_SIZE target)
     get_filename_component(target_name ${target} NAME_WE)
     get_target_property(target_output ${target} OUTPUT_NAME)
+    if(CMAKE_EXECUTABLE_SUFFIX)
+        set(target_output ${target_output}${CMAKE_EXECUTABLE_SUFFIX})
+    endif()
 
     #print the size information
     add_custom_command(
@@ -39,10 +42,40 @@ macro(GEN_OUT_SIZE target)
     add_custom_target(
         ${target_name}_out_size ALL DEPENDS ${target_name}_size
     )
-endmacro(GEN_OUT_SIZE)
+endmacro(SHOW_SIZE)
 
 
-macro(GEN_OBJECTS_SIZE target)
+
+########################################################################
+# helper functions to show sections size
+########################################################################
+
+macro(SHOW_SECTIONS_SIZE target)
+    get_filename_component(target_name ${target} NAME_WE)
+    get_target_property(target_output ${target} OUTPUT_NAME)
+    if(CMAKE_EXECUTABLE_SUFFIX)
+        set(target_output ${target_output}${CMAKE_EXECUTABLE_SUFFIX})
+    endif()
+
+    #print the size information
+    add_custom_command(
+        OUTPUT ${target_name}_sections_size DEPENDS ${target}
+        COMMAND ${SIZE} --format=sysv -x ${target_output}
+    )
+
+    #add a top level target for output files
+    add_custom_target(
+        ${target_name}_out_sections_size ALL DEPENDS ${target_name}_sections_size
+    )
+endmacro(SHOW_SECTIONS_SIZE)
+
+
+
+########################################################################
+# helper functions to show objects size
+########################################################################
+
+macro(SHOW_OBJECTS_SIZE target)
     get_filename_component(target_name ${target} NAME_WE)
 
     get_target_property(sources ${target} SOURCES)
@@ -53,15 +86,16 @@ macro(GEN_OBJECTS_SIZE target)
 
     #print the size information
     add_custom_command(
-        OUTPUT ${target_name}_obj_size DEPENDS ${target}
+        OUTPUT ${target_name}_objects_size DEPENDS ${target}
         COMMAND ${SIZE} --format=berkeley --totals ${objects}
     )
 
     #add a top level target for output files
     add_custom_target(
-        ${target_name}_out_obj_size ALL DEPENDS ${target_name}_obj_size
+        ${target_name}_out_objects_size ALL DEPENDS ${target_name}_objects_size
     )
-endmacro(GEN_OBJECTS_SIZE)
+endmacro(SHOW_OBJECTS_SIZE)
+
 
 
 
@@ -73,6 +107,9 @@ endmacro(GEN_OBJECTS_SIZE)
 macro(GEN_OUT_FORMATS target)
     get_filename_component(target_name ${target} NAME_WE)
     get_target_property(target_output ${target} OUTPUT_NAME)
+    if(CMAKE_EXECUTABLE_SUFFIX)
+        set(target_output ${target_output}${CMAKE_EXECUTABLE_SUFFIX})
+    endif()
 
     #command to create a hex from elf
     add_custom_command(
@@ -86,53 +123,90 @@ macro(GEN_OUT_FORMATS target)
         COMMAND ${OBJCOPY} -O binary ${target_output} ${target_name}.bin
     )
 
-    #command to create a rom from bin
-    add_custom_command(
-        OUTPUT ${target_name}.rom DEPENDS ${target_name}.bin
-        COMMAND ${HEXDUMP} -v -e'1/1 \"%.2X\\n\"' ${target_name}.bin > ${target_name}.rom
-    )
+    # #command to create a rom from bin
+    # add_custom_command(
+    #     OUTPUT ${target_name}.rom DEPENDS ${target_name}.bin
+    #     COMMAND ${HEXDUMP} -v -e'1/1 \"%.2X\\n\"' ${target_name}.bin > ${target_name}.rom
+    # )
 
     #add a top level target for output files
     add_custom_target(
-        ${target_name}_out_formats ALL DEPENDS ${target_name}.bin ${target_name}.hex ${target_name}.rom
+        ${target_name}_out_formats ALL DEPENDS ${target_name}.bin ${target_name}.hex
     )
 endmacro(GEN_OUT_FORMATS)
 
 
 
-
 ########################################################################
-# helper functions to build output linstings
+# helper functions to build output linsting
 ########################################################################
 
 macro(GEN_OUT_LISTING target)
     get_filename_component(target_name ${target} NAME_WE)
     get_target_property(target_output ${target} OUTPUT_NAME)
+    if(CMAKE_EXECUTABLE_SUFFIX)
+        set(target_output ${target_output}${CMAKE_EXECUTABLE_SUFFIX})
+    endif()
 
     #command to create a lss from elf
     add_custom_command(
         OUTPUT ${target_name}.lss DEPENDS ${target}
-        COMMAND ${OBJDUMP} -S ${target_output} > ${target_name}.lss
-    )
-
-    #command to create a dmp from elf
-    add_custom_command(
-        OUTPUT ${target_name}.dmp DEPENDS ${target}
-        COMMAND ${OBJDUMP} -x --syms ${target_output} > ${target_name}.dmp
-    )
-
-    #command to create a dump from elf
-    add_custom_command(
-        OUTPUT ${target_name}.dump DEPENDS ${target}
-        COMMAND ${OBJDUMP} -DSC ${target_output} > ${target_name}.dump
+        COMMAND ${OBJDUMP} -C -S ${target_output} > ${target_name}.lss
     )
 
     #add a top level target for output files
     add_custom_target(
-        ${target_name}_out_listing ALL DEPENDS ${target_name}.lss ${target_name}.dmp ${target_name}.dump
+        ${target_name}_out_listing ALL DEPENDS ${target_name}.lss
     )
 endmacro(GEN_OUT_LISTING)
 
 
 
+########################################################################
+# helper functions to build output symbols
+########################################################################
+
+macro(GEN_OUT_SYMS target)
+    get_filename_component(target_name ${target} NAME_WE)
+    get_target_property(target_output ${target} OUTPUT_NAME)
+    if(CMAKE_EXECUTABLE_SUFFIX)
+        set(target_output ${target_output}${CMAKE_EXECUTABLE_SUFFIX})
+    endif()
+
+    #command to create a dmp from elf
+    add_custom_command(
+        OUTPUT ${target_name}.syms DEPENDS ${target}
+        COMMAND ${OBJDUMP} -x --syms ${target_output} > ${target_name}.syms
+    )
+
+    #add a top level target for output files
+    add_custom_target(
+        ${target_name}_out_syms ALL DEPENDS ${target_name}.syms
+    )
+endmacro(GEN_OUT_SYMS)
+
+
+
+########################################################################
+# helper functions to build output dump
+########################################################################
+
+macro(GEN_OUT_DUMP target)
+    get_filename_component(target_name ${target} NAME_WE)
+    get_target_property(target_output ${target} OUTPUT_NAME)
+    if(CMAKE_EXECUTABLE_SUFFIX)
+        set(target_output ${target_output}${CMAKE_EXECUTABLE_SUFFIX})
+    endif()
+
+    #command to create a dump from elf
+    add_custom_command(
+        OUTPUT ${target_name}.dump DEPENDS ${target}
+        COMMAND ${OBJDUMP} -s ${target_output} > ${target_name}.dump
+    )
+
+    #add a top level target for output files
+    add_custom_target(
+        ${target_name}_out_dump ALL DEPENDS ${target_name}.dump
+    )
+endmacro(GEN_OUT_DUMP)
 
