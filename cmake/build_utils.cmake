@@ -21,36 +21,6 @@ set(APP_PERMISSIONS  OWNER_READ OWNER_WRITE OWNER_EXECUTE
 # helper functions to add sources
 ########################################################################
 
-# add source files
-function(ADD_SOURCES target)
-    set(target_srcs "${target}_SRCS")
-    # get current sources list, define if necessary
-    get_property(is_defined GLOBAL PROPERTY "${target_srcs}" DEFINED)
-    if(NOT is_defined)
-        define_property(GLOBAL PROPERTY "${target_srcs}"
-                        BRIEF_DOCS "${target} sources"
-                        FULL_DOCS "List of source files to be compiled into ${target}")
-    endif()
-
-    foreach(src IN LISTS ARGN)
-        # find apsolute source path
-        if(NOT IS_ABSOLUTE "${src}")
-            get_filename_component(src "${src}" ABSOLUTE)
-        endif()
-        # append source path
-        set_property(GLOBAL APPEND PROPERTY "${target_srcs}" "${src}")
-    endforeach()
-endfunction()
-
-function(ADD_LIB_SOURCES)
-    add_sources(${PRJ_LIB_NAME} ${ARGN})
-endfunction()
-
-function(ADD_APP_SOURCES)
-    add_sources(${PRJ_APP_NAME} ${ARGN})
-endfunction()
-
-
 # add source file and private defines for the file
 function(ADD_SOURCE target src)
     set(target_srcs "${target}_SRCS")
@@ -70,7 +40,11 @@ function(ADD_SOURCE target src)
         get_filename_component(src "${src}" ABSOLUTE)
     endif()
     # append source path
-    set_property(GLOBAL APPEND PROPERTY "${target_srcs}" "${src} ${defs}")
+    if(EXISTS "${src}")
+        set_property(GLOBAL APPEND PROPERTY "${target_srcs}" "${src} ${defs}")
+    else()
+        message(WARNING "Source file not found: ${src}")
+    endif()
 endfunction()
 
 function(ADD_LIB_SOURCE)
@@ -81,6 +55,58 @@ function(ADD_APP_SOURCE)
     add_source(${PRJ_APP_NAME} ${ARGN})
 endfunction()
 
+# add source files with glob/regex support
+function(ADD_SOURCES_EX target)
+    foreach(pattern IN LISTS ARGN)
+        # convert relative patterns to absolute
+        if(NOT IS_ABSOLUTE "${pattern}")
+            set(pattern "${CMAKE_CURRENT_SOURCE_DIR}/${pattern}")
+        endif()
+
+        # check for recursive pattern
+        if("${pattern}" MATCHES "\\*\\*/")
+            string(REPLACE "**/" "" recursive_pattern "${pattern}")
+            file(GLOB_RECURSE matched_files CONFIGURE_DEPENDS "${recursive_pattern}")
+        else()
+            file(GLOB matched_files CONFIGURE_DEPENDS "${pattern}")
+        endif()
+
+        if(matched_files)
+            foreach(src IN LISTS matched_files)
+                add_source("${target}" "${src}")
+            endforeach()
+        else()
+            message(WARNING "No files match with pattern: ${pattern}")
+        endif()
+    endforeach()
+endfunction()
+
+function(ADD_LIB_SOURCES_EX)
+    add_sources_ex(${PRJ_LIB_NAME} ${ARGN})
+endfunction()
+
+function(ADD_APP_SOURCES_EX)
+    add_sources_ex(${PRJ_APP_NAME} ${ARGN})
+endfunction()
+
+# add source files
+function(ADD_SOURCES target)
+    foreach(src IN LISTS ARGN)
+        if("${src}" MATCHES "[*?[]")
+            add_sources_ex(${target} "${src}")
+        else()
+            add_source("${target}" "${src}")
+        endif()
+    endforeach()
+endfunction()
+
+function(ADD_LIB_SOURCES)
+    add_sources(${PRJ_LIB_NAME} ${ARGN})
+endfunction()
+
+function(ADD_APP_SOURCES)
+    add_sources(${PRJ_APP_NAME} ${ARGN})
+endfunction()
 
 # retrieve source files
 function(GET_SOURCES result)
@@ -106,11 +132,17 @@ macro(SET_PRIVATE_DEFINES target)
         list(GET def_list 0 src)
         list(REMOVE_AT def_list 0)
         string(REPLACE ";" " " defs "${def_list}")
-        # find relative source path
-        file(RELATIVE_PATH relsrc "${CMAKE_CURRENT_SOURCE_DIR}" "${src}")
         set_source_files_properties( ${src} PROPERTIES COMPILE_FLAGS "${defs}")
     endforeach()
 endmacro()
+
+# Add preprocessor define __FILENAME__ with relative source path for each source file
+function(set_filename_defines target)
+    get_target_property(sources "${target}" SOURCES)
+    foreach(src ${sources})
+        set_property(SOURCE "${src}" APPEND PROPERTY COMPILE_DEFINITIONS "__FILENAME__=\"${src}\"")
+    endforeach()
+endfunction()
 
 
 
