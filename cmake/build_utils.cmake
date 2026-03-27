@@ -21,7 +21,7 @@ set(APP_PERMISSIONS  OWNER_READ OWNER_WRITE OWNER_EXECUTE
 # helper functions to add sources
 ########################################################################
 
-# add source file and private defines for the file
+# add source file and private cflags for the file
 function(ADD_SOURCE target src)
     set(target_srcs "${target}_SRCS")
     # get current sources list, define if necessary
@@ -32,8 +32,8 @@ function(ADD_SOURCE target src)
                         FULL_DOCS "List of source files to be compiled into ${target}")
     endif()
 
-    foreach(def IN LISTS ARGN)
-        set(defs "${def} ${defs}")
+    foreach(cflag IN LISTS ARGN)
+        set(cflags "${cflag} ${cflags}")
     endforeach()
 
     if(NOT IS_ABSOLUTE "${src}")
@@ -41,7 +41,7 @@ function(ADD_SOURCE target src)
     endif()
     # append source path
     if(EXISTS "${src}")
-        set_property(GLOBAL APPEND PROPERTY "${target_srcs}" "${src} ${defs}")
+        set_property(GLOBAL APPEND PROPERTY "${target_srcs}" "${src} ${cflags}")
     else()
         message(WARNING "Source file not found: ${src}")
     endif()
@@ -124,20 +124,20 @@ function(GET_SOURCES result)
     set(${result} ${srclist} PARENT_SCOPE)
 endfunction()
 
-# setup private defines for each source file
-macro(SET_PRIVATE_DEFINES target)
+# setup private cflags for each source file
+macro(SET_PRIVATE_CFLAGS target)
     get_property(sources GLOBAL PROPERTY "${target}_SRCS")
     foreach(src IN LISTS sources)
-        string(REPLACE " " ";" def_list ${src})
-        list(GET def_list 0 src)
-        list(REMOVE_AT def_list 0)
-        string(REPLACE ";" " " defs "${def_list}")
-        set_source_files_properties( ${src} PROPERTIES COMPILE_FLAGS "${defs}")
+        string(REPLACE " " ";" cflags_list ${src})
+        list(GET cflags_list 0 src)
+        list(REMOVE_AT cflags_list 0)
+        string(REPLACE ";" " " cflags "${cflags_list}")
+        set_source_files_properties( ${src} PROPERTIES COMPILE_FLAGS "${cflags}")
     endforeach()
 endmacro()
 
 # Add preprocessor define __FILENAME__ with relative source path for each source file
-function(set_filename_defines target)
+function(SET_FILENAME_DEFINES target)
     get_target_property(sources "${target}" SOURCES)
     foreach(src ${sources})
         set_property(SOURCE "${src}" APPEND PROPERTY COMPILE_DEFINITIONS "__FILENAME__=\"${src}\"")
@@ -342,7 +342,7 @@ endfunction()
 
 # Add preprocessor define __FILENAME__ with relative source path
 # for each source file depended on given target
-function(define_filename_for_sources target)
+function(DEFINE_FILENAME_FOR_SOURCES target)
     get_target_property(sources "${target}" SOURCES)
     foreach(src ${sources})
         set_property(SOURCE "${src}" APPEND PROPERTY COMPILE_DEFINITIONS "__FILENAME__=\"${src}\"")
