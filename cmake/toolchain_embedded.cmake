@@ -4,12 +4,12 @@
 ########################################################################
 
 
-set(TARGET_ARCH             arm)
-set(TARGET_TOOLCHAIN        arm-none-eabi)
+# set(TARGET_ARCH             arm)
+# set(TARGET_TOOLCHAIN        arm-none-eabi)
 
 # check toolchain directory
 if(NOT TARGET_TOOLCHAIN_DIR)
-    set(TARGET_TOOLCHAIN_DIR $ENV{TARGET_TOOLCHAIN_DIR})
+    set(TARGET_TOOLCHAIN_DIR $ENV{TARGET_${TARGET_ARCH}_TOOLCHAIN_DIR})
 endif()
 if(NOT TARGET_TOOLCHAIN_DIR)
     if(WIN32)
@@ -41,6 +41,7 @@ set(CMAKE_CROSSCOMPILING    TRUE)
 set(CMAKE_SYSTEM_PROCESSOR  ${TARGET_ARCH})
 set(CMAKE_C_COMPILER        ${TARGET_TOOLCHAIN_DIR}/bin/${TARGET_TOOLCHAIN}-gcc${CMAKE_HOST_EXECUTABLE_SUFFIX})
 set(CMAKE_CXX_COMPILER      ${TARGET_TOOLCHAIN_DIR}/bin/${TARGET_TOOLCHAIN}-g++${CMAKE_HOST_EXECUTABLE_SUFFIX})
+set(CMAKE_C_OBJCOPY         ${TARGET_TOOLCHAIN_DIR}/bin/${TARGET_TOOLCHAIN}-objcopy${CMAKE_HOST_EXECUTABLE_SUFFIX})
 
 # skip checking compiler
 set(CMAKE_C_COMPILER_WORKS      1)
@@ -55,6 +56,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM  NEVER)
 # for libraries and headers in the target directories
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE  ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY  ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE  ONLY)
 
 
 # use relative path
