@@ -4,8 +4,12 @@
 ########################################################################
 
 
-# set(TARGET_ARCH             arm)
-# set(TARGET_TOOLCHAIN        arm-none-eabi)
+if(NOT TARGET_ARCH)
+    message(FATAL_ERROR "Target architecture 'TARGET_ARCH' not defined")
+endif()
+if(NOT TARGET_TOOLCHAIN)
+    message(FATAL_ERROR "Target toolchain 'TARGET_TOOLCHAIN' not defined")
+endif()
 
 # check toolchain directory
 if(NOT TARGET_TOOLCHAIN_DIR)
