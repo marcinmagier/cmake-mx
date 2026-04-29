@@ -28,9 +28,12 @@ endif()
 
 if(NOT LINKER_SCRIPT)
     get_property(LINKER_SCRIPT GLOBAL PROPERTY "LINKER_SCRIPT")
-    if(NOT LINKER_SCRIPT)
-        message( FATAL_ERROR "Linker script not specified")
-    endif()
+endif()
+if(NOT LINKER_SCRIPTS)
+    get_property(LINKER_SCRIPTS GLOBAL PROPERTY "LINKER_SCRIPTS")
+endif()
+if(NOT LINKER_SCRIPT AND NOT LINKER_SCRIPTS)
+    message( FATAL_ERROR "Linker script not specified")
 endif()
 
 
@@ -66,9 +69,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
 
 # Link flags
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Map=${PRJ_APP_NAME}.map,--cref")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T${LINKER_SCRIPT}")
+if(LINKER_SCRIPT)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T${LINKER_SCRIPT}")
+endif()
+if(LINKER_SCRIPTS)
+    foreach(linker_script IN LISTS LINKER_SCRIPTS)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T${linker_script}")
+    endforeach()
+endif()
 if(LINKER_SCRIPTS_DIR)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${LINKER_SCRIPTS_DIR}")
+endif()
+if(LINKER_SCRIPTS_DIRS)
+    foreach(linker_script_dir IN LISTS LINKER_SCRIPTS_DIRS)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${linker_script_dir}")
+    endforeach()
 endif()
 
 
