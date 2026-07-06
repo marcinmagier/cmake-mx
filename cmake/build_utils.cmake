@@ -370,12 +370,20 @@ endfunction()
 # other functions
 ########################################################################
 
-# Add preprocessor define __FILENAME__ with relative source path
+# Add preprocessor define __FILEPATH__ with relative source path
+# for each source file depended on given target
+function(DEFINE_FILEPATH_FOR_SOURCES target)
+    get_target_property(sources "${target}" SOURCES)
+    foreach(src ${sources})
+        set_property(SOURCE "${src}" APPEND PROPERTY COMPILE_DEFINITIONS "__FILEPATH__=\"${src}\"")
+    endforeach()
+endfunction()
+
+# Add preprocessor define __FILENAME__ with name of the file
 # for each source file depended on given target
 function(DEFINE_FILENAME_FOR_SOURCES target)
     get_target_property(sources "${target}" SOURCES)
     foreach(src ${sources})
-        set_property(SOURCE "${src}" APPEND PROPERTY COMPILE_DEFINITIONS "__FILENAME__=\"${src}\"")
+        set_property(SOURCE "${src}" APPEND PROPERTY COMPILE_DEFINITIONS "__FILENAME__=\"$<PATH:GET_FILENAME,${src}>\"")
     endforeach()
 endfunction()
-
