@@ -23,6 +23,11 @@ set(APP_PERMISSIONS  OWNER_READ OWNER_WRITE OWNER_EXECUTE
 
 # add source file and private cflags for the file
 function(ADD_SOURCE target src)
+    parse_conditional_args(ARG "CFLAGS" ${ARGN})
+    if(NOT ARG_CONDITION)
+        return()
+    endif()
+
     set(target_srcs "${target}_SRCS")
     # get current sources list, define if necessary
     get_property(is_defined GLOBAL PROPERTY "${target_srcs}" DEFINED)
@@ -32,7 +37,7 @@ function(ADD_SOURCE target src)
                         FULL_DOCS "List of source files to be compiled into ${target}")
     endif()
 
-    foreach(cflag IN LISTS ARGN)
+    foreach(cflag IN LISTS ARG_VALUES)
         set(cflags "${cflag} ${cflags}")
     endforeach()
 
@@ -91,7 +96,12 @@ endfunction()
 
 # add source files
 function(ADD_SOURCES target)
-    foreach(src IN LISTS ARGN)
+    parse_conditional_args(ARG "SOURCES" ${ARGN})
+    if(NOT ARG_CONDITION)
+        return()
+    endif()
+
+    foreach(src IN LISTS ARG_VALUES)
         if("${src}" MATCHES "[*?[]")
             add_sources_ex(${target} "${src}")
         else()
@@ -152,6 +162,11 @@ endfunction()
 ########################################################################
 
 function(ADD_INCLUDES target)
+    parse_conditional_args(ARG "INCLUDES" ${ARGN})
+    if(NOT ARG_CONDITION)
+        return()
+    endif()
+
     set(target_incs "${target}_INCS")
     # get current includes list, define if necessary
     get_property(is_defined GLOBAL PROPERTY "${target_incs}" DEFINED)
@@ -161,7 +176,7 @@ function(ADD_INCLUDES target)
                         FULL_DOCS "List of include directories for ${target}")
     endif()
 
-    foreach(inc IN LISTS ARGN)
+    foreach(inc IN LISTS ARG_VALUES)
         # find apsolute include path
         if(NOT IS_ABSOLUTE "${inc}")
             get_filename_component(inc "${inc}" ABSOLUTE)
@@ -206,6 +221,11 @@ endfunction()
 ########################################################################
 
 function(ADD_HEADERS target)
+    parse_conditional_args(ARG "HEADERS" ${ARGN})
+    if(NOT ARG_CONDITION)
+        return()
+    endif()
+
     set(target_hdrs "${target}_HDRS")
     # get current headers list, define if necessary
     get_property(is_defined GLOBAL PROPERTY "${target_hdrs}" DEFINED)
@@ -215,7 +235,7 @@ function(ADD_HEADERS target)
                         FULL_DOCS "List of exported headers for ${target}")
     endif()
 
-    foreach(hdr IN LISTS ARGN)
+    foreach(hdr IN LISTS ARG_VALUES)
         # find apsolute include path
         if(NOT IS_ABSOLUTE "${hdr}")
             get_filename_component(hdr "${hdr}" ABSOLUTE)
@@ -255,6 +275,11 @@ endfunction()
 ########################################################################
 
 function(ADD_DEFINES target)
+    parse_conditional_args(ARG "DEFINES" ${ARGN})
+    if(NOT ARG_CONDITION)
+        return()
+    endif()
+
     set(target_defs "${target}_DEFS")
     # get current defines list, define if necessary
     get_property(is_defined GLOBAL PROPERTY "${target_defs}" DEFINED)
@@ -264,7 +289,7 @@ function(ADD_DEFINES target)
                         FULL_DOCS "List of defines for ${target}")
     endif()
 
-    foreach(def IN LISTS ARGN)
+    foreach(def IN LISTS ARG_VALUES)
         # append define
         set_property(GLOBAL APPEND PROPERTY "${target_defs}" "${def}")
     endforeach()
@@ -298,6 +323,11 @@ endfunction()
 ########################################################################
 
 function(ADD_CFLAGS target)
+    parse_conditional_args(ARG "CFLAGS" ${ARGN})
+    if(NOT ARG_CONDITION)
+        return()
+    endif()
+
     set(target_cfgs "${target}_CFGS")
     # get current cflags list, define if necessary
     get_property(is_defined GLOBAL PROPERTY "${target_cfgs}" DEFINED)
@@ -307,7 +337,7 @@ function(ADD_CFLAGS target)
                         FULL_DOCS "List of cflags for ${target}")
     endif()
 
-    foreach(cfg IN LISTS ARGN)
+    foreach(cfg IN LISTS ARG_VALUES)
         # append define
         set_property(GLOBAL APPEND_STRING PROPERTY "${target_cfgs}" "${cfg} ")
     endforeach()
